@@ -1,0 +1,39 @@
+networks:
+  customer-network:
+    driver: bridge
+    name: customer-network
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: customer-db
+    restart: unless-stopped
+    environment:
+      - "POSTGRES_DB=customer-db"
+      - "POSTGRES_USER=user"
+      - "POSTGRES_PASSWORD=secret"
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    networks:
+      - customer-network
+
+  customer_backend:
+    container_name: customer-backend
+    depends_on:
+      - postgres
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=secret
+      - DB_HOST=postgres
+    ports:
+      - "8080:8080"
+    networks:
+      - customer-network
+
+volumes:
+  pgdata:
